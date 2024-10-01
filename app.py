@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 
 # Configure the MySQL database connection using SQLAlchemy
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlclient://dkinzer222:Adverse2024!@dkinzer222.mysql.pythonanywhere-services.com/dkinzer222$default'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlclient://dkinzer222:Adverse2024%21@dkinzer222.mysql.pythonanywhere-services.com/dkinzer222$default'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Disable warning for unnecessary tracking modifications
 
 # Initialize the database with SQLAlchemy
@@ -27,17 +27,29 @@ def index():
 # Route for adding a new user (for testing)
 @app.route('/add_user/<username>/<email>')
 def add_user(username, email):
-    new_user = User(username=username, email=email)
-    db.session.add(new_user)
-    db.session.commit()
-    return f"Added user {username} to the database!"
+    try:
+        new_user = User(username=username, email=email)
+        db.session.add(new_user)
+        db.session.commit()
+        return f"Added user {username} to the database!"
+    except Exception as e:
+        db.session.rollback()
+        return f"Failed to add user: {str(e)}"
 
 # Route for displaying all users in the database (for testing)
 @app.route('/users')
 def get_users():
-    users = User.query.all()
-    return '<br>'.join([f'ID: {user.id}, Username: {user.username}, Email: {user.email}' for user in users])
+    try:
+        users = User.query.all()
+        return '<br>'.join([f'ID: {user.id}, Username: {user.username}, Email: {user.email}' for user in users])
+    except Exception as e:
+        return f"Failed to fetch users: {str(e)}"
 
-# Run the app only in development (on PythonAnywhere, this is managed automatically)
+# Add the dummy user directly for testing
+@app.route('/add_dummy_data')
+def add_dummy_data():
+    return add_user('brittbritt', 'brittbritta@gmail.com')
+
+# Run the app
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
